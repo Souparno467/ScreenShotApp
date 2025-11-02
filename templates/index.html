@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Screenshot Pro | @soupDeVeLops</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <!-- Floating camera icons -->
+    <div class="camera-float" style="top: 10%; left: 10%; animation-delay: 0s;">📷</div>
+    <div class="camera-float" style="top: 70%; left: 15%; animation-delay: 2s;">📸</div>
+    <div class="camera-float" style="top: 20%; right: 10%; animation-delay: 4s;">📷</div>
+    <div class="camera-float" style="top: 80%; right: 20%; animation-delay: 6s;">📸</div>
+    <div class="camera-float" style="top: 50%; left: 5%; animation-delay: 8s;">📷</div>
+    <div class="camera-float" style="top: 40%; right: 5%; animation-delay: 10s;">📸</div>
+
+    <!-- Success Notification -->
+    <div class="notification" id="notification">
+        <div class="notification-icon">✨</div>
+        <div>
+            <div class="notification-text">Screenshot Saved Successfully!</div>
+            <div style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.8); margin-top: 0.25rem;">
+                Your capture is ready in the selected folder
+            </div>
+        </div>
+    </div>
+
+    <div class="container-wrapper">
+        <div class="glass-container">
+            <h1 class="title"><span style="filter: none; -webkit-text-fill-color: initial; animation: none;">📸</span> Say Cheese!</h1>
+            <p class="subtitle">Professional Screenshot Capture Tool</p>
+
+            <form method="POST" id="screenshotForm">
+                <div class="input-group">
+                    <label>🌐 Website URL</label>
+                    <input 
+                        type="text" 
+                        name="url" 
+                        placeholder="https://example.com" 
+                        required
+                        value="{{ request.form.get('url', '') }}"
+                    >
+                </div>
+
+                <div class="input-group">
+                    <label>💻 Device Resolution</label>
+                    <select name="device" id="device" onchange="toggleCustom()">
+                        <option value="laptop" {% if request.form.get('device') == 'laptop' %}selected{% endif %}>💻 Laptop (1366x768)</option>
+                        <option value="desktop" {% if request.form.get('device') == 'desktop' %}selected{% endif %}>🖥️ Desktop (1920x1080)</option>
+                        <option value="mobile" {% if request.form.get('device') == 'mobile' %}selected{% endif %}>📱 Mobile (375x812)</option>
+                        <option value="custom" {% if request.form.get('device') == 'custom' %}selected{% endif %}>⚙️ Custom Resolution</option>
+                    </select>
+                </div>
+
+                <div class="custom-fields {% if request.form.get('device') == 'custom' %}show{% endif %}" id="custom-fields">
+                    <div style="flex: 1;">
+                        <input 
+                            type="number" 
+                            name="width" 
+                            placeholder="Width (px)"
+                            min="1"
+                            value="{{ request.form.get('width', '') }}"
+                        >
+                    </div>
+                    <div style="flex: 1;">
+                        <input 
+                            type="number" 
+                            name="height" 
+                            placeholder="Height (px)"
+                            min="1"
+                            value="{{ request.form.get('height', '') }}"
+                        >
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>🎨 Export Format</label>
+                    <select name="format">
+                        <option value="png" {% if request.form.get('format') == 'png' %}selected{% endif %}>PNG - High Quality</option>
+                        <option value="jpg" {% if request.form.get('format') == 'jpg' %}selected{% endif %}>JPG - Compressed</option>
+                        <option value="pdf" {% if request.form.get('format') == 'pdf' %}selected{% endif %}>PDF - Document</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label>📁 Save Location (Where screenshots will be SAVED)</label>
+                    
+                    <input 
+                        type="hidden" 
+                        name="savepath" 
+                        id="savepath-hidden"
+                        value="{{ request.form.get('savepath', '') }}"
+                        required
+                    >
+                    
+                    <div class="path-display-panel" id="path-display">
+                        <div class="path-icon">📂</div>
+                        <div class="path-content">
+                            <div class="path-label">Selected Path:</div>
+                            <div class="path-text" id="path-text">No folder selected - Click "Browse Folder" to select</div>
+                        </div>
+                    </div>
+                    
+                    <button type="button" class="file-input-label" id="browse-btn" onclick="selectFolderForSaving()">
+                        <span class="icon-folder">📂</span>
+                        <span>Browse Folder</span>
+                    </button>
+                    
+                    <input 
+                        type="file" 
+                        id="file-input"
+                        webkitdirectory 
+                        directory 
+                        style="display: none;"
+                        onchange="updateFolderPathFromInput(this)"
+                    >
+                    
+                    <div class="note">
+                        💡 Click "Browse Folder" to select where screenshots will be SAVED<br>
+                        <small style="opacity: 0.7;">For full folder navigation, use Chrome, Edge, or Opera browser</small>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-capture">
+                     Capture Screenshot
+                </button>
+
+               
+            <div class="footer">
+                © 2025 Screenshot Pro by <span>@soupDeVeLops</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleCustom() {
+            const device = document.getElementById('device').value;
+            const customFields = document.getElementById('custom-fields');
+            if (device === 'custom') {
+                customFields.classList.add('show');
+            } else {
+                customFields.classList.remove('show');
+            }
+        }
+
+        function showNotification() {
+            const notification = document.getElementById('notification');
+            notification.classList.add('show');
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 4000);
+        }
+
+        function updateFolderPathFromInput(input) {
+            if (input.files.length > 0) {
+                const file = input.files[0];
+                if (file.webkitRelativePath) {
+                    const pathParts = file.webkitRelativePath.split('/');
+                    const selectedFolderName = pathParts[0];
+                    const fullPath = selectedFolderName;
+                    const pathDisplay = document.getElementById('path-display');
+                    const pathText = document.getElementById('path-text');
+                    const hiddenInput = document.getElementById('savepath-hidden');
+                    pathText.textContent = fullPath;
+                    pathDisplay.classList.add('path-selected');
+                    hiddenInput.value = fullPath;
+                }
+            }
+        }
+
+        async function selectFolderForSaving() {
+            const hasFileSystemAPI = 'showDirectoryPicker' in window;
+            try {
+                if (hasFileSystemAPI) {
+                    const dirHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+                    const folderName = dirHandle.name;
+                    const pathDisplay = document.getElementById('path-display');
+                    const pathText = document.getElementById('path-text');
+                    const hiddenInput = document.getElementById('savepath-hidden');
+                    pathText.textContent = folderName;
+                    pathDisplay.classList.add('path-selected');
+                    hiddenInput.value = folderName;
+                } else {
+                    document.getElementById('file-input').click();
+                }
+            } catch (err) {
+                if (err.name !== 'AbortError') alert('Error selecting folder: ' + err.message);
+            }
+        }
+
+        document.getElementById('screenshotForm').addEventListener('submit', function(e) {
+            const hiddenInput = document.getElementById('savepath-hidden');
+            if (!hiddenInput.value || !hiddenInput.value.trim()) {
+                e.preventDefault();
+                alert('⚠️ Please click "Browse Folder" to select where screenshots will be SAVED!');
+                return false;
+            }
+
+            const submitBtn = document.querySelector('.btn-capture');
+            submitBtn.disabled = true;
+            submitBtn.textContent = '⏳ Capturing...';
+            submitBtn.style.opacity = '0.7';
+
+            // Simulate backend screenshot process - show notification after capture
+            setTimeout(() => {
+                showNotification();
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Capture Screenshot';
+                submitBtn.style.opacity = '1';
+            }, 2000); // Adjust to match actual backend timing
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            toggleCustom();
+            const savedPath = '{{ request.form.get("savepath", "") }}';
+            if (savedPath) {
+                const pathDisplay = document.getElementById('path-display');
+                const pathText = document.getElementById('path-text');
+                const hiddenInput = document.getElementById('savepath-hidden');
+                pathText.textContent = savedPath;
+                pathDisplay.classList.add('path-selected');
+                hiddenInput.value = savedPath;
+            }
+        });
+    </script>
+
+    <style>
+        @keyframes fadeOut {
+            from { opacity: 1; transform: translateY(0); }
+            to { opacity: 0; transform: translateY(-10px); }
+        }
+
+        .success-message {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.5);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-top: 1rem;
+            color: #6ee7b7;
+            font-size: 0.9rem;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        .btn-capture:disabled {
+            cursor: not-allowed;
+        }
+        
+        .path-display-panel {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: rgba(30, 41, 59, 0.4);
+            border: 2px dashed rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            margin-bottom: 0.75rem;
+            min-height: 70px;
+            transition: all 0.3s ease;
+        }
+        
+        .path-display-panel.path-selected {
+            background: rgba(16, 185, 129, 0.1);
+            border: 2px solid rgba(16, 185, 129, 0.5);
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);
+        }
+        
+        .path-icon {
+            font-size: 2rem;
+            opacity: 0.5;
+            transition: all 0.3s ease;
+        }
+        
+        .path-display-panel.path-selected .path-icon {
+            opacity: 1;
+            animation: folderPulse 2s ease-in-out infinite;
+        }
+        
+        .path-content {
+            flex: 1;
+        }
+        
+        .path-label {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 0.25rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .path-text {
+            font-size: 0.95rem;
+            color: rgba(255, 255, 255, 0.7);
+            word-break: break-all;
+            line-height: 1.4;
+            transition: all 0.3s ease;
+        }
+        
+        .path-display-panel.path-selected .path-text {
+            color: #6ee7b7;
+            font-weight: 600;
+            text-shadow: 
+                0 0 10px rgba(16, 185, 129, 0.6),
+                0 0 20px rgba(16, 185, 129, 0.4),
+                0 0 30px rgba(16, 185, 129, 0.3);
+            animation: textGlow 2s ease-in-out infinite alternate;
+        }
+        
+        @keyframes textGlow {
+            from {
+                text-shadow: 
+                    0 0 10px rgba(16, 185, 129, 0.6),
+                    0 0 20px rgba(16, 185, 129, 0.4),
+                    0 0 30px rgba(16, 185, 129, 0.3);
+            }
+            to {
+                text-shadow: 
+                    0 0 15px rgba(16, 185, 129, 0.8),
+                    0 0 25px rgba(16, 185, 129, 0.6),
+                    0 0 35px rgba(16, 185, 129, 0.4),
+                    0 0 45px rgba(16, 185, 129, 0.3);
+            }
+        }
+    </style>
+</body>
+</html>
